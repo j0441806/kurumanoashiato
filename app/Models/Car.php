@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CarCategory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable(['maker', 'model', 'grade', 'category', 'station', 'memo'])]
 class Car extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     /** @return array<string, string> */
     protected function casts(): array
