@@ -15,6 +15,15 @@
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="truck" :href="route('cars.index')" :current="request()->routeIs('cars.*')" wire:navigate>
+                        {{ __('Cars') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="map" :href="route('drive-records.index')" :current="request()->routeIs('drive-records.*')" wire:navigate>
+                        {{ __('Drive records') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="photo" :href="route('albums.index')" :current="request()->routeIs('albums.*')" wire:navigate>
+                        {{ __('Albums') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 
