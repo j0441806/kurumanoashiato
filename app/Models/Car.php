@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CarCategory;
+use Database\Factories\CarFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable(['maker', 'model', 'grade', 'category', 'station', 'memo'])]
 class Car extends Model
 {
+    /** @use HasFactory<CarFactory> */
     use HasFactory, SoftDeletes;
 
     /** @return array<string, string> */

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\RoadType;
+use Database\Factories\DriveRecordFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class DriveRecord extends Model
 {
+    /** @use HasFactory<DriveRecordFactory> */
     use HasFactory;
 
     /** @return array<string, string> */

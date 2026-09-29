@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\PhotoFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['file_path', 'note'])]
 class Photo extends Model
 {
+    /** @use HasFactory<PhotoFactory> */
     use HasFactory;
 
     /** @return BelongsTo<Car, $this> */
