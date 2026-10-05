@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Cars\CreateCar;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
@@ -7,6 +8,7 @@ Route::view('/', 'welcome')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');
     Route::view('cars', 'cars.index')->name('cars.index');
+    Route::livewire('cars/create', CreateCar::class)->name('cars.create');
     Route::view('drive-records', 'drive-records.index')->name('drive-records.index');
     Route::view('albums', 'albums.index')->name('albums.index');
 });
