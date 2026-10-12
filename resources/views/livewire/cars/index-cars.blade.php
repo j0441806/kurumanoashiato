@@ -23,7 +23,9 @@
                 @foreach ($this->cars as $car)
                     <flux:table.row :key="$car->id">
                         <flux:table.cell variant="strong">
-                            {{ $car->maker }} / {{ $car->model }}
+                            <flux:link :href="route('cars.show', $car)" wire:navigate>
+                                {{ $car->maker }} / {{ $car->model }}
+                            </flux:link>
                         </flux:table.cell>
                         <flux:table.cell>{{ $car->category->label() }}</flux:table.cell>
                     </flux:table.row>
