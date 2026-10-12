@@ -69,7 +69,8 @@ class IndexCarsTest extends TestCase
             $response
                 ->assertSee($car->maker)
                 ->assertSee($car->model)
-                ->assertSee($car->category->label());
+                ->assertSee($car->category->label())
+                ->assertSee(route('cars.show', $car, absolute: false), escape: false);
         }
     }
 
