@@ -1,6 +1,10 @@
 <section class="w-full max-w-2xl">
-    <div class="mb-6">
+    <div class="mb-6 flex items-center justify-between gap-4">
         <flux:heading size="xl">車両詳細</flux:heading>
+
+        <flux:button :href="route('cars.edit', $car)" variant="primary" wire:navigate>
+            編集
+        </flux:button>
     </div>
 
     <dl class="divide-y divide-zinc-200 rounded-xl border border-zinc-200 dark:divide-zinc-700 dark:border-zinc-700">
