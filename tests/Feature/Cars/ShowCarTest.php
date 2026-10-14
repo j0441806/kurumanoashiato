@@ -48,7 +48,8 @@ class ShowCarTest extends TestCase
                 '新宿駅前',
                 'メモ',
                 '長距離ドライブ用',
-            ]);
+            ])
+            ->assertSee(route('cars.edit', $car, absolute: false), escape: false);
     }
 
     public function test_nullable_values_are_shown_as_hyphens_when_absent(): void
