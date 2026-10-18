@@ -33,6 +33,15 @@ class DriveRecordTest extends TestCase
         );
     }
 
+    public function test_factory_generates_a_positive_distance_with_at_most_one_decimal_place(): void
+    {
+        $driveRecord = DriveRecord::factory()->create();
+
+        $this->assertGreaterThanOrEqual(0.1, (float) $driveRecord->distance);
+        $this->assertLessThanOrEqual(999999.9, (float) $driveRecord->distance);
+        $this->assertMatchesRegularExpression('/^\d{1,6}\.\d$/', $driveRecord->distance);
+    }
+
     public function test_car_can_create_and_retrieve_drive_records_through_the_relationship(): void
     {
         $car = Car::factory()->create();

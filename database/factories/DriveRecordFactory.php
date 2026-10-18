@@ -19,7 +19,7 @@ class DriveRecordFactory extends Factory
             'destination' => fake()->city(),
             'spots' => fake()->optional()->city(),
             'road_types' => fake()->randomElements(RoadType::cases(), fake()->numberBetween(1, 3)),
-            'distance' => fake()->randomFloat(1, 0, 99999.9),
+            'distance' => fake()->randomFloat(1, 0.1, 999999.9),
             'note_theme' => fake()->optional()->sentence(),
             'note_good_points' => fake()->optional()->sentence(),
             'note_issues' => fake()->optional()->sentence(),
