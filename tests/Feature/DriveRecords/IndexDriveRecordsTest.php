@@ -45,6 +45,7 @@ class IndexDriveRecordsTest extends TestCase
             ->assertSee('Levorg')
             ->assertSee('東京')
             ->assertSee('箱根')
+            ->assertSee(route('drive-records.show', $driveRecord, absolute: false), escape: false)
             ->assertDontSee($otherUsersDriveRecord->departure)
             ->assertDontSee($otherUsersDriveRecord->destination);
     }

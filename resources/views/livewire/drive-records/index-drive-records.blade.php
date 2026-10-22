@@ -25,7 +25,11 @@
             <flux:table.rows>
                 @foreach ($this->driveRecords as $driveRecord)
                     <flux:table.row :key="$driveRecord->id">
-                        <flux:table.cell>{{ $driveRecord->drive_date->format('Y-m-d') }}</flux:table.cell>
+                        <flux:table.cell>
+                            <flux:link :href="route('drive-records.show', $driveRecord)" wire:navigate>
+                                {{ $driveRecord->drive_date->format('Y-m-d') }}
+                            </flux:link>
+                        </flux:table.cell>
                         <flux:table.cell variant="strong">
                             {{ $driveRecord->car->maker }} / {{ $driveRecord->car->model }}
                         </flux:table.cell>
