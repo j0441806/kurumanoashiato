@@ -1,4 +1,4 @@
-<section class="w-full max-w-2xl">
+<section class="w-full max-w-5xl">
     <div class="mb-6">
         <flux:heading size="xl">ドライブ記録登録</flux:heading>
         <flux:subheading>ドライブの記録を入力してください。</flux:subheading>
@@ -14,7 +14,7 @@
         </div>
     @else
         <form wire:submit="save" class="space-y-6">
-            <flux:input wire:model="driveDate" label="日付" type="date" required />
+            <flux:input wire:model="driveDate" label="日付" type="date" :max="today()->toDateString()" required />
 
             <flux:select wire:model.number="carId" label="車両" required>
                 <flux:select.option value="">選択してください</flux:select.option>

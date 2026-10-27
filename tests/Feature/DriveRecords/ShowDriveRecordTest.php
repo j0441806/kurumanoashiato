@@ -73,6 +73,7 @@ class ShowDriveRecordTest extends TestCase
                 'メモ',
                 'また訪れたい',
             ])
+            ->assertSee(route('drive-records.edit', $driveRecord, absolute: false), escape: false)
             ->assertSee(route('drive-records.index', absolute: false), escape: false);
     }
 

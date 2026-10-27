@@ -1,6 +1,10 @@
 <section class="w-full max-w-5xl">
-    <div class="mb-6">
+    <div class="mb-6 flex items-center justify-between gap-4">
         <flux:heading size="xl">ドライブ記録詳細</flux:heading>
+
+        <flux:button :href="route('drive-records.edit', $driveRecord)" variant="primary" wire:navigate>
+            編集
+        </flux:button>
     </div>
 
     <div class="space-y-12">

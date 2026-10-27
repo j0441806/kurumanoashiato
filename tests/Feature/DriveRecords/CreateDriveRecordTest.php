@@ -41,6 +41,7 @@ class CreateDriveRecordTest extends TestCase
 
         $component = Livewire::test(CreateDriveRecord::class)
             ->assertSet('driveDate', '2026-10-15')
+            ->assertSeeHtml('max="2026-10-15"')
             ->assertSee('Subaru')
             ->assertSee('Levorg')
             ->assertDontSee('Other User Maker')
