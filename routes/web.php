@@ -5,6 +5,7 @@ use App\Livewire\Cars\EditCar;
 use App\Livewire\Cars\IndexCars;
 use App\Livewire\Cars\ShowCar;
 use App\Livewire\DriveRecords\CreateDriveRecord;
+use App\Livewire\DriveRecords\EditDriveRecord;
 use App\Livewire\DriveRecords\IndexDriveRecords;
 use App\Livewire\DriveRecords\ShowDriveRecord;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('cars/{car}', ShowCar::class)->name('cars.show');
     Route::livewire('drive-records', IndexDriveRecords::class)->name('drive-records.index');
     Route::livewire('drive-records/create', CreateDriveRecord::class)->name('drive-records.create');
+    Route::livewire('drive-records/{driveRecord}/edit', EditDriveRecord::class)->name('drive-records.edit');
     Route::livewire('drive-records/{driveRecord}', ShowDriveRecord::class)->name('drive-records.show');
     Route::view('albums', 'albums.index')->name('albums.index');
 });
