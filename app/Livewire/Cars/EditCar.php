@@ -2,19 +2,29 @@
 
 namespace App\Livewire\Cars;
 
+use App\Actions\Cars\AddCarPhotos;
 use App\Enums\CarCategory;
 use App\Models\Car;
+use App\Models\Photo;
 use App\Models\User;
+use Flux\Flux;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\File;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
+use Throwable;
 
 #[Title('車両編集')]
 class EditCar extends Component
 {
+    use WithFileUploads;
+
     #[Locked]
     public int $carId;
 
@@ -32,6 +42,17 @@ class EditCar extends Component
     public string $station = '';
 
     public string $memo = '';
+
+    /** @var array<int, TemporaryUploadedFile> */
+    public array $photoUploads = [];
+
+    /** @var array<int, string> */
+    public array $photoNotes = [];
+
+    /** @var array<int, string> */
+    public array $photoUploadKeys = [];
+
+    public int $photoInputKey = 0;
 
     public function mount(Car $car): void
     {
@@ -79,6 +100,37 @@ class EditCar extends Component
         return $this->isOwned() && $this->hadPersistedStation;
     }
 
+    /** @return Collection<int, Photo> */
+    #[Computed]
+    public function carPhotos(): Collection
+    {
+        $user = Auth::user();
+
+        abort_unless($user instanceof User, 403);
+
+        $car = $user->cars()->whereKey($this->carId)->firstOrFail();
+
+        return $car->photos()->orderBy('id')->get();
+    }
+
+    public function updatedPhotoUploads(): void
+    {
+        $notesByUploadKey = [];
+
+        foreach ($this->photoUploadKeys as $index => $uploadKey) {
+            $notesByUploadKey[$uploadKey] = $this->photoNotes[$index] ?? '';
+        }
+
+        $this->photoUploadKeys = [];
+        $this->photoNotes = [];
+
+        foreach ($this->photoUploads as $index => $upload) {
+            $uploadKey = $upload->getFilename();
+            $this->photoUploadKeys[$index] = $uploadKey;
+            $this->photoNotes[$index] = $notesByUploadKey[$uploadKey] ?? '';
+        }
+    }
+
     public function save(): void
     {
         $validated = $this->validate();
@@ -99,6 +151,35 @@ class EditCar extends Component
         $this->redirectRoute('cars.show', $car, absolute: false, navigate: true);
     }
 
+    public function addPhotos(AddCarPhotos $addCarPhotos): void
+    {
+        $user = Auth::user();
+
+        abort_unless($user instanceof User, 403);
+
+        $car = $user->cars()->whereKey($this->carId)->firstOrFail();
+        $validated = $this->validate($this->photoRules());
+
+        try {
+            $addCarPhotos->handle($car, $this->photoUploads, $validated['photoNotes'] ?? []);
+        } catch (Throwable $exception) {
+            report($exception);
+            $this->addError('photoUploads', '写真の追加に失敗しました。時間をおいて再度お試しください。');
+
+            return;
+        }
+
+        $this->clearPhotoSelection();
+        unset($this->carPhotos);
+
+        Flux::toast(variant: 'success', text: '写真を追加しました。');
+    }
+
+    public function resetPhotoSelection(): void
+    {
+        $this->clearPhotoSelection();
+    }
+
     /** @return array<string, mixed> */
     protected function rules(): array
     {
@@ -116,5 +197,28 @@ class EditCar extends Component
             ],
             'memo' => ['nullable', 'string', 'max:10000'],
         ];
+    }
+
+    /** @return array<string, mixed> */
+    private function photoRules(): array
+    {
+        return [
+            'photoUploads' => ['required', 'array', 'min:1', 'max:5'],
+            'photoUploads.*' => [File::image()->types(['jpg', 'jpeg', 'png', 'webp'])->max(5120)],
+            'photoNotes' => ['array', 'max:5'],
+            'photoNotes.*' => ['nullable', 'string', 'max:1000'],
+        ];
+    }
+
+    private function clearPhotoSelection(): void
+    {
+        $this->reset('photoUploads', 'photoNotes', 'photoUploadKeys');
+        $this->photoInputKey++;
+        $this->resetValidation([
+            'photoUploads',
+            'photoUploads.*',
+            'photoNotes',
+            'photoNotes.*',
+        ]);
     }
 }
