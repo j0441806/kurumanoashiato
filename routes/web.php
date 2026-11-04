@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CarPhotoController;
+use App\Http\Controllers\DriveRecordPhotoController;
 use App\Livewire\Cars\CreateCar;
 use App\Livewire\Cars\EditCar;
 use App\Livewire\Cars\IndexCars;
@@ -22,6 +23,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('cars/{car}', ShowCar::class)->name('cars.show');
     Route::livewire('drive-records', IndexDriveRecords::class)->name('drive-records.index');
     Route::livewire('drive-records/create', CreateDriveRecord::class)->name('drive-records.create');
+    Route::get('drive-records/{driveRecord}/photos/{photo}', DriveRecordPhotoController::class)->name('drive-records.photos.show');
     Route::livewire('drive-records/{driveRecord}/edit', EditDriveRecord::class)->name('drive-records.edit');
     Route::livewire('drive-records/{driveRecord}', ShowDriveRecord::class)->name('drive-records.show');
     Route::view('albums', 'albums.index')->name('albums.index');
