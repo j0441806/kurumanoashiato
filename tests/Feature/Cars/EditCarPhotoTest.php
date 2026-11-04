@@ -345,7 +345,7 @@ class EditCarPhotoTest extends TestCase
         Storage::fake('local');
 
         $user = User::factory()->create();
-        $car = Car::factory()->for($user)->create();
+        $car = Car::factory()->for($user)->create(['station' => 'Test Station']);
 
         $this->actingAs($user);
 

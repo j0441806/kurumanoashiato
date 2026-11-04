@@ -2,24 +2,33 @@
 
 namespace App\Livewire\DriveRecords;
 
+use App\Actions\DriveRecords\AddDriveRecordPhotos;
 use App\Enums\RoadType;
 use App\Models\Car;
 use App\Models\DriveRecord;
+use App\Models\Photo;
 use App\Models\User;
+use Flux\Flux;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\File;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
+use Throwable;
 
 #[Title('ドライブ記録編集')]
 class EditDriveRecord extends Component
 {
+    use WithFileUploads;
+
     #[Locked]
     public int $driveRecordId;
 
@@ -47,6 +56,17 @@ class EditDriveRecord extends Component
     public string $noteNextAction = '';
 
     public string $noteFree = '';
+
+    /** @var array<int, TemporaryUploadedFile> */
+    public array $photoUploads = [];
+
+    /** @var array<int, string> */
+    public array $photoNotes = [];
+
+    /** @var array<int, string> */
+    public array $photoUploadKeys = [];
+
+    public int $photoInputKey = 0;
 
     public function mount(DriveRecord $driveRecord): void
     {
@@ -92,6 +112,38 @@ class EditDriveRecord extends Component
         return RoadType::cases();
     }
 
+    /** @return Collection<int, Photo> */
+    #[Computed]
+    public function driveRecordPhotos(): Collection
+    {
+        $user = Auth::user();
+
+        abort_unless($user instanceof User, 403);
+
+        return $this->ownedDriveRecord($this->driveRecordId, $user)
+            ->photos()
+            ->orderBy('id')
+            ->get();
+    }
+
+    public function updatedPhotoUploads(): void
+    {
+        $notesByUploadKey = [];
+
+        foreach ($this->photoUploadKeys as $index => $uploadKey) {
+            $notesByUploadKey[$uploadKey] = $this->photoNotes[$index] ?? '';
+        }
+
+        $this->photoUploadKeys = [];
+        $this->photoNotes = [];
+
+        foreach ($this->photoUploads as $index => $upload) {
+            $uploadKey = $upload->getFilename();
+            $this->photoUploadKeys[$index] = $uploadKey;
+            $this->photoNotes[$index] = $notesByUploadKey[$uploadKey] ?? '';
+        }
+    }
+
     public function save(): void
     {
         $user = Auth::user();
@@ -120,6 +172,35 @@ class EditDriveRecord extends Component
         $driveRecord->save();
 
         $this->redirectRoute('drive-records.show', $driveRecord, absolute: false, navigate: true);
+    }
+
+    public function addPhotos(AddDriveRecordPhotos $addDriveRecordPhotos): void
+    {
+        $user = Auth::user();
+
+        abort_unless($user instanceof User, 403);
+
+        $driveRecord = $this->ownedDriveRecord($this->driveRecordId, $user);
+        $validated = $this->validate($this->photoRules());
+
+        try {
+            $addDriveRecordPhotos->handle($driveRecord, $this->photoUploads, $validated['photoNotes'] ?? []);
+        } catch (Throwable $exception) {
+            report($exception);
+            $this->addError('photoUploads', '写真の追加に失敗しました。時間をおいて再度お試しください。');
+
+            return;
+        }
+
+        $this->clearPhotoSelection();
+        unset($this->driveRecordPhotos);
+
+        Flux::toast(variant: 'success', text: '写真を追加しました。');
+    }
+
+    public function resetPhotoSelection(): void
+    {
+        $this->clearPhotoSelection();
     }
 
     /** @return array<string, mixed> */
@@ -154,11 +235,34 @@ class EditDriveRecord extends Component
         ];
     }
 
+    /** @return array<string, mixed> */
+    private function photoRules(): array
+    {
+        return [
+            'photoUploads' => ['required', 'array', 'min:1', 'max:5'],
+            'photoUploads.*' => [File::image()->types(['jpg', 'jpeg', 'png', 'webp'])->max(5120)],
+            'photoNotes' => ['array', 'max:5'],
+            'photoNotes.*' => ['nullable', 'string', 'max:1000'],
+        ];
+    }
+
     private function ownedDriveRecord(int $driveRecordId, User $user): DriveRecord
     {
         return DriveRecord::query()
             ->whereKey($driveRecordId)
             ->whereHas('car', fn (EloquentBuilder $query) => $query->where('user_id', $user->id))
             ->firstOrFail();
+    }
+
+    private function clearPhotoSelection(): void
+    {
+        $this->reset('photoUploads', 'photoNotes', 'photoUploadKeys');
+        $this->photoInputKey++;
+        $this->resetValidation([
+            'photoUploads',
+            'photoUploads.*',
+            'photoNotes',
+            'photoNotes.*',
+        ]);
     }
 }
