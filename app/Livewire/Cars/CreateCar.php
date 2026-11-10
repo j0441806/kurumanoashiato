@@ -2,17 +2,25 @@
 
 namespace App\Livewire\Cars;
 
+use App\Actions\Cars\CreateCarWithPhotos;
 use App\Enums\CarCategory;
 use App\Models\User;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\File;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
+use Throwable;
 
 #[Title('車両登録')]
 class CreateCar extends Component
 {
+    use WithFileUploads;
+
     public string $maker = '';
 
     public string $model = '';
@@ -24,6 +32,17 @@ class CreateCar extends Component
     public string $station = '';
 
     public string $memo = '';
+
+    /** @var array<int, TemporaryUploadedFile> */
+    public array $photoUploads = [];
+
+    /** @var array<int, string> */
+    public array $photoNotes = [];
+
+    /** @var array<int, string> */
+    public array $photoUploadKeys = [];
+
+    public int $photoInputKey = 0;
 
     /** @return array<CarCategory> */
     #[Computed]
@@ -41,7 +60,25 @@ class CreateCar extends Component
         ], true);
     }
 
-    public function save(): void
+    public function updatedPhotoUploads(): void
+    {
+        $notesByUploadKey = [];
+
+        foreach ($this->photoUploadKeys as $index => $uploadKey) {
+            $notesByUploadKey[$uploadKey] = $this->photoNotes[$index] ?? '';
+        }
+
+        $this->photoUploadKeys = [];
+        $this->photoNotes = [];
+
+        foreach ($this->photoUploads as $index => $upload) {
+            $uploadKey = $upload->getFilename();
+            $this->photoUploadKeys[$index] = $uploadKey;
+            $this->photoNotes[$index] = $notesByUploadKey[$uploadKey] ?? '';
+        }
+    }
+
+    public function save(CreateCarWithPhotos $createCarWithPhotos): void
     {
         $validated = $this->validate();
         $category = CarCategory::from((int) $validated['category']);
@@ -55,9 +92,34 @@ class CreateCar extends Component
 
         abort_unless($user instanceof User, 403);
 
-        $user->cars()->create($validated);
+        try {
+            $createCarWithPhotos->handle(
+                $user,
+                Arr::except($validated, ['photoUploads', 'photoNotes']),
+                $this->photoUploads,
+                $validated['photoNotes'] ?? [],
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+            $this->addError('save', '車両の登録に失敗しました。時間をおいて再度お試しください。');
+
+            return;
+        }
 
         $this->redirectRoute('cars.index', absolute: false, navigate: true);
+    }
+
+    public function resetPhotoSelection(): void
+    {
+        $this->reset('photoUploads', 'photoNotes', 'photoUploadKeys');
+        $this->photoInputKey++;
+        $this->resetValidation([
+            'photoUploads',
+            'photoUploads.*',
+            'photoNotes',
+            'photoNotes.*',
+            'save',
+        ]);
     }
 
     /** @return array<string, mixed> */
@@ -76,6 +138,10 @@ class CreateCar extends Component
                 'max:255',
             ],
             'memo' => ['nullable', 'string', 'max:10000'],
+            'photoUploads' => ['array', 'max:5'],
+            'photoUploads.*' => [File::image()->types(['jpg', 'jpeg', 'png', 'webp'])->max(5120)],
+            'photoNotes' => ['array', 'max:5'],
+            'photoNotes.*' => ['nullable', 'string', 'max:1000'],
         ];
     }
 }
