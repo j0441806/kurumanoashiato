@@ -2,6 +2,7 @@
 
 namespace App\Livewire\DriveRecords;
 
+use App\Actions\DriveRecords\CreateDriveRecordWithPhotos;
 use App\Enums\RoadType;
 use App\Models\Car;
 use App\Models\User;
@@ -9,13 +10,19 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\File;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
+use Throwable;
 
 #[Title('ドライブ記録登録')]
 class CreateDriveRecord extends Component
 {
+    use WithFileUploads;
+
     public string $driveDate = '';
 
     public ?int $carId = null;
@@ -41,6 +48,17 @@ class CreateDriveRecord extends Component
 
     public string $noteFree = '';
 
+    /** @var array<int, TemporaryUploadedFile> */
+    public array $photoUploads = [];
+
+    /** @var array<int, string> */
+    public array $photoNotes = [];
+
+    /** @var array<int, string> */
+    public array $photoUploadKeys = [];
+
+    public int $photoInputKey = 0;
+
     public function mount(): void
     {
         $this->driveDate = today()->toDateString();
@@ -64,31 +82,74 @@ class CreateDriveRecord extends Component
         return RoadType::cases();
     }
 
-    public function save(): void
+    public function updatedPhotoUploads(): void
+    {
+        $notesByUploadKey = [];
+
+        foreach ($this->photoUploadKeys as $index => $uploadKey) {
+            $notesByUploadKey[$uploadKey] = $this->photoNotes[$index] ?? '';
+        }
+
+        $this->photoUploadKeys = [];
+        $this->photoNotes = [];
+
+        foreach ($this->photoUploads as $index => $upload) {
+            $uploadKey = $upload->getFilename();
+            $this->photoUploadKeys[$index] = $uploadKey;
+            $this->photoNotes[$index] = $notesByUploadKey[$uploadKey] ?? '';
+        }
+    }
+
+    public function save(CreateDriveRecordWithPhotos $createDriveRecordWithPhotos): void
     {
         $validated = $this->validate();
         $user = Auth::user();
 
         abort_unless($user instanceof User, 403);
 
-        $car = $user->cars()->whereKey((int) $validated['carId'])->firstOrFail();
         $roadTypes = array_map(RoadType::from(...), $this->roadTypes);
 
-        $car->driveRecords()->create([
-            'drive_date' => $validated['driveDate'],
-            'departure' => $validated['departure'],
-            'destination' => $validated['destination'],
-            'spots' => filled($validated['spots']) ? $validated['spots'] : null,
-            'road_types' => $roadTypes === [] ? null : $roadTypes,
-            'distance' => $validated['distance'],
-            'note_theme' => filled($validated['noteTheme']) ? $validated['noteTheme'] : null,
-            'note_good_points' => filled($validated['noteGoodPoints']) ? $validated['noteGoodPoints'] : null,
-            'note_issues' => filled($validated['noteIssues']) ? $validated['noteIssues'] : null,
-            'note_next_action' => filled($validated['noteNextAction']) ? $validated['noteNextAction'] : null,
-            'note_free' => filled($validated['noteFree']) ? $validated['noteFree'] : null,
-        ]);
+        try {
+            $createDriveRecordWithPhotos->handle(
+                $user,
+                (int) $validated['carId'],
+                [
+                    'drive_date' => $validated['driveDate'],
+                    'departure' => $validated['departure'],
+                    'destination' => $validated['destination'],
+                    'spots' => filled($validated['spots']) ? $validated['spots'] : null,
+                    'road_types' => $roadTypes === [] ? null : $roadTypes,
+                    'distance' => $validated['distance'],
+                    'note_theme' => filled($validated['noteTheme']) ? $validated['noteTheme'] : null,
+                    'note_good_points' => filled($validated['noteGoodPoints']) ? $validated['noteGoodPoints'] : null,
+                    'note_issues' => filled($validated['noteIssues']) ? $validated['noteIssues'] : null,
+                    'note_next_action' => filled($validated['noteNextAction']) ? $validated['noteNextAction'] : null,
+                    'note_free' => filled($validated['noteFree']) ? $validated['noteFree'] : null,
+                ],
+                $this->photoUploads,
+                $validated['photoNotes'] ?? [],
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+            $this->addError('save', 'ドライブ記録の登録に失敗しました。時間をおいて再度お試しください。');
+
+            return;
+        }
 
         $this->redirectRoute('drive-records.index', absolute: false, navigate: true);
+    }
+
+    public function resetPhotoSelection(): void
+    {
+        $this->reset('photoUploads', 'photoNotes', 'photoUploadKeys');
+        $this->photoInputKey++;
+        $this->resetValidation([
+            'photoUploads',
+            'photoUploads.*',
+            'photoNotes',
+            'photoNotes.*',
+            'save',
+        ]);
     }
 
     /** @return array<string, mixed> */
@@ -120,6 +181,10 @@ class CreateDriveRecord extends Component
             'noteIssues' => ['nullable', 'string', 'max:10000'],
             'noteNextAction' => ['nullable', 'string', 'max:10000'],
             'noteFree' => ['nullable', 'string', 'max:10000'],
+            'photoUploads' => ['array', 'max:5'],
+            'photoUploads.*' => [File::image()->types(['jpg', 'jpeg', 'png', 'webp'])->max(5120)],
+            'photoNotes' => ['array', 'max:5'],
+            'photoNotes.*' => ['nullable', 'string', 'max:1000'],
         ];
     }
 }
