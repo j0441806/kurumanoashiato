@@ -10,7 +10,13 @@
     @else
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             @foreach ($this->photos as $photo)
-                <div class="relative overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800" wire:key="photo-{{ $photo->id }}">
+                <a
+                    class="relative block overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800"
+                    href="{{ route('albums.show', $photo) }}"
+                    aria-label="写真の詳細を表示"
+                    wire:key="photo-{{ $photo->id }}"
+                    wire:navigate
+                >
                     <img
                         class="aspect-square w-full object-cover"
                         src="{{ $photo->car_id !== null
@@ -30,7 +36,7 @@
                             </span>
                         @endif
                     </div>
-                </div>
+                </a>
             @endforeach
         </div>
     @endif
