@@ -34,6 +34,8 @@ class IndexAlbumsTest extends TestCase
             ->assertOk()
             ->assertSee('車両写真')
             ->assertSee('ドライブ記録写真')
+            ->assertSee(route('albums.show', $carPhoto, absolute: false), escape: false)
+            ->assertSee(route('albums.show', $driveRecordPhoto, absolute: false), escape: false)
             ->assertSee(route('cars.photos.show', [$car, $carPhoto], absolute: false), escape: false)
             ->assertSee(
                 route('drive-records.photos.show', [$driveRecord, $driveRecordPhoto], absolute: false),

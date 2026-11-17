@@ -3,6 +3,7 @@
 use App\Http\Controllers\CarPhotoController;
 use App\Http\Controllers\DriveRecordPhotoController;
 use App\Livewire\Albums\IndexAlbums;
+use App\Livewire\Albums\ShowAlbum;
 use App\Livewire\Cars\CreateCar;
 use App\Livewire\Cars\EditCar;
 use App\Livewire\Cars\IndexCars;
@@ -28,6 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('drive-records/{driveRecord}/edit', EditDriveRecord::class)->name('drive-records.edit');
     Route::livewire('drive-records/{driveRecord}', ShowDriveRecord::class)->name('drive-records.show');
     Route::livewire('albums', IndexAlbums::class)->name('albums.index');
+    Route::livewire('albums/{photo}', ShowAlbum::class)->name('albums.show');
 });
 
 require __DIR__.'/settings.php';
