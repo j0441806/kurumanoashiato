@@ -1,4 +1,4 @@
-<section class="w-full max-w-2xl">
+<section class="w-full max-w-5xl">
     <div class="mb-6 flex items-center justify-between gap-4">
         <flux:heading size="xl">車両詳細</flux:heading>
 
@@ -33,6 +33,31 @@
             <dd class="whitespace-pre-wrap text-zinc-900 sm:col-span-2 dark:text-zinc-100">{{ $car->memo ?: '-' }}</dd>
         </div>
     </dl>
+
+    <div class="mt-12 border-t border-zinc-200 pt-8 dark:border-zinc-700">
+        <flux:heading size="lg" class="mb-4">登録済み写真</flux:heading>
+
+        @if ($car->photos->isEmpty())
+            <p class="text-sm text-zinc-500 dark:text-zinc-400">まだ写真が登録されていません。</p>
+        @else
+            <div class="grid gap-4 sm:grid-cols-2">
+                @foreach ($car->photos as $photo)
+                    <figure class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
+                        <img
+                            class="aspect-square w-full object-cover"
+                            src="{{ route('cars.photos.show', [$car, $photo]) }}"
+                            alt="車両写真"
+                            loading="lazy"
+                        />
+
+                        <figcaption class="p-4 text-sm whitespace-pre-wrap text-zinc-700 dark:text-zinc-200">
+                            {{ $photo->note ?: 'メモなし' }}
+                        </figcaption>
+                    </figure>
+                @endforeach
+            </div>
+        @endif
+    </div>
 
     <div class="mt-6">
         <flux:button :href="route('cars.index')" variant="ghost" wire:navigate>車両一覧へ戻る</flux:button>

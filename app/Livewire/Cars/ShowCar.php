@@ -19,6 +19,9 @@ class ShowCar extends Component
 
         abort_unless($user instanceof User, 403);
 
-        $this->car = $user->cars()->whereKey($car->getKey())->firstOrFail();
+        $this->car = $user->cars()
+            ->whereKey($car->getKey())
+            ->with(['photos' => fn ($query) => $query->orderBy('id')])
+            ->firstOrFail();
     }
 }
