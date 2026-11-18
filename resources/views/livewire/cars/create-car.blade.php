@@ -1,4 +1,4 @@
-<section class="w-full max-w-2xl">
+<section class="w-full max-w-5xl">
     <div class="mb-6">
         <flux:heading size="xl">車両登録</flux:heading>
         <flux:subheading>車両の情報を入力してください。</flux:subheading>
