@@ -23,7 +23,10 @@ class ShowDriveRecord extends Component
         $this->driveRecord = DriveRecord::query()
             ->whereKey($driveRecord->getKey())
             ->whereHas('car', fn (Builder $query) => $query->where('user_id', $user->id))
-            ->with('car')
+            ->with([
+                'car',
+                'photos' => fn ($query) => $query->orderBy('id'),
+            ])
             ->firstOrFail();
     }
 }
