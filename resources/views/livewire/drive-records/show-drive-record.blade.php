@@ -79,6 +79,31 @@
         </div>
     </div>
 
+    <div class="mt-12 border-t border-zinc-200 pt-8 dark:border-zinc-700">
+        <flux:heading size="lg" class="mb-4">登録済み写真</flux:heading>
+
+        @if ($driveRecord->photos->isEmpty())
+            <p class="text-sm text-zinc-500 dark:text-zinc-400">まだ写真が登録されていません。</p>
+        @else
+            <div class="grid gap-4 sm:grid-cols-2">
+                @foreach ($driveRecord->photos as $photo)
+                    <figure class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700">
+                        <img
+                            class="aspect-square w-full object-cover"
+                            src="{{ route('drive-records.photos.show', [$driveRecord, $photo]) }}"
+                            alt="ドライブ写真"
+                            loading="lazy"
+                        />
+
+                        <figcaption class="p-4 text-sm whitespace-pre-wrap text-zinc-700 dark:text-zinc-200">
+                            {{ $photo->note ?: 'メモなし' }}
+                        </figcaption>
+                    </figure>
+                @endforeach
+            </div>
+        @endif
+    </div>
+
     <div class="mt-6">
         <flux:button :href="route('drive-records.index')" variant="ghost" wire:navigate>ドライブ記録一覧へ戻る</flux:button>
     </div>

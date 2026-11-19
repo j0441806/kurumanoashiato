@@ -5,6 +5,7 @@ namespace Tests\Feature\DriveRecords;
 use App\Enums\RoadType;
 use App\Models\Car;
 use App\Models\DriveRecord;
+use App\Models\Photo;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -110,6 +111,112 @@ class ShowDriveRecordTest extends TestCase
                 'メモ',
                 '未記入',
             ]);
+    }
+
+    public function test_registered_drive_record_photos_and_notes_are_shown_in_id_order(): void
+    {
+        $user = User::factory()->create();
+        $car = Car::factory()->for($user)->create();
+        $driveRecord = DriveRecord::factory()->for($car)->create();
+        $firstPhoto = Photo::factory()->forDriveRecord()->create([
+            'drive_record_id' => $driveRecord->getKey(),
+            'note' => "最初の写真\nメモ",
+        ]);
+        $secondPhoto = Photo::factory()->forDriveRecord()->create([
+            'drive_record_id' => $driveRecord->getKey(),
+            'note' => '次の写真',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('drive-records.show', $driveRecord));
+
+        $response
+            ->assertOk()
+            ->assertSee('登録済み写真')
+            ->assertSee("最初の写真\nメモ")
+            ->assertSee('次の写真')
+            ->assertSeeInOrder([
+                route('drive-records.photos.show', [$driveRecord, $firstPhoto], absolute: false),
+                route('drive-records.photos.show', [$driveRecord, $secondPhoto], absolute: false),
+            ], escape: false);
+    }
+
+    public function test_photo_without_a_note_is_shown_as_no_note(): void
+    {
+        $user = User::factory()->create();
+        $car = Car::factory()->for($user)->create();
+        $driveRecord = DriveRecord::factory()->for($car)->create();
+        Photo::factory()->forDriveRecord()->create([
+            'drive_record_id' => $driveRecord->getKey(),
+            'note' => null,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('drive-records.show', $driveRecord))
+            ->assertOk()
+            ->assertSee('メモなし');
+    }
+
+    public function test_empty_photo_state_is_shown(): void
+    {
+        $user = User::factory()->create();
+        $car = Car::factory()->for($user)->create();
+        $driveRecord = DriveRecord::factory()->for($car)->create();
+
+        $this->actingAs($user)
+            ->get(route('drive-records.show', $driveRecord))
+            ->assertOk()
+            ->assertSee('登録済み写真')
+            ->assertSee('まだ写真が登録されていません。');
+    }
+
+    public function test_photos_not_directly_attached_to_the_target_drive_record_are_not_shown(): void
+    {
+        $user = User::factory()->create();
+        $car = Car::factory()->for($user)->create();
+        $driveRecord = DriveRecord::factory()->for($car)->create();
+        $otherDriveRecord = DriveRecord::factory()->for($car)->create();
+        $otherUsersDriveRecord = DriveRecord::factory()->create();
+        $targetPhoto = Photo::factory()->forDriveRecord()->create([
+            'drive_record_id' => $driveRecord->getKey(),
+            'note' => '対象ドライブの写真',
+        ]);
+        $otherDriveRecordPhoto = Photo::factory()->forDriveRecord()->create([
+            'drive_record_id' => $otherDriveRecord->getKey(),
+            'note' => '別ドライブの写真',
+        ]);
+        $otherUsersPhoto = Photo::factory()->forDriveRecord()->create([
+            'drive_record_id' => $otherUsersDriveRecord->getKey(),
+            'note' => '他ユーザーの写真',
+        ]);
+        $carPhoto = Photo::factory()->for($car)->create(['note' => '車両写真']);
+
+        $this->actingAs($user)
+            ->get(route('drive-records.show', $driveRecord))
+            ->assertOk()
+            ->assertSee(
+                route('drive-records.photos.show', [$driveRecord, $targetPhoto], absolute: false),
+                escape: false,
+            )
+            ->assertDontSee(
+                route(
+                    'drive-records.photos.show',
+                    [$otherDriveRecord, $otherDriveRecordPhoto],
+                    absolute: false,
+                ),
+                escape: false,
+            )
+            ->assertDontSee(
+                route(
+                    'drive-records.photos.show',
+                    [$otherUsersDriveRecord, $otherUsersPhoto],
+                    absolute: false,
+                ),
+                escape: false,
+            )
+            ->assertDontSee('別ドライブの写真')
+            ->assertDontSee('他ユーザーの写真')
+            ->assertDontSee($carPhoto->note);
     }
 
     public function test_user_cannot_view_another_users_drive_record(): void
