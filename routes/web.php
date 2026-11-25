@@ -8,6 +8,7 @@ use App\Livewire\Cars\CreateCar;
 use App\Livewire\Cars\EditCar;
 use App\Livewire\Cars\IndexCars;
 use App\Livewire\Cars\ShowCar;
+use App\Livewire\Dashboard;
 use App\Livewire\DriveRecords\CreateDriveRecord;
 use App\Livewire\DriveRecords\EditDriveRecord;
 use App\Livewire\DriveRecords\IndexDriveRecords;
@@ -17,7 +18,7 @@ use Illuminate\Support\Facades\Route;
 Route::view('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::livewire('dashboard', Dashboard::class)->name('dashboard');
     Route::livewire('cars', IndexCars::class)->name('cars.index');
     Route::livewire('cars/create', CreateCar::class)->name('cars.create');
     Route::get('cars/{car}/photos/{photo}', CarPhotoController::class)->name('cars.photos.show');
